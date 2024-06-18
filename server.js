@@ -4,7 +4,7 @@ const basicAuth = require('express-basic-auth');
 const promClient = require('prom-client');
 
 const app = express();
-const port = 9696;
+const port = 3000;
 const fhirServerUrl = 'http://192.168.162.23:8080';
 const BEARER_TOKEN = 'uniciasas'; // Reemplaza con tu token secreto
 
