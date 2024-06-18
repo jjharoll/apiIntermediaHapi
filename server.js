@@ -18,7 +18,7 @@ const auth = basicAuth({
 // Middleware para verificar el token Bearer
 const bearerAuth = (req, res, next) => {
   const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.split(' ')[1] === BEARER_TOKEN) {
+  if (authHeader && authHeader.startsWith('Bearer ') && authHeader.split(' ')[1] === BEARER_TOKEN) {
     next();
   } else {
     res.status(403).send('Acceso denegado. Contacte con Unicia SAS para obtener acceso.');
@@ -35,18 +35,18 @@ app.get('/metrics', async (req, res) => {
   res.end(await register.metrics());
 });
 
-// Endpoint de proxy para HAPI FHIR server con autenticación básica y verificación de token Bearer
+// Middleware de autenticación básica
 app.use(auth);
+
+// Middleware de autenticación Bearer
 app.use(bearerAuth);
 
 // Middleware para manejar el proxy de solicitudes FHIR
 app.use(async (req, res) => {
-  const fhirUrl = `${fhirServerUrl}${req.originalUrl}`;
-  console.log(`Proxying request to: ${fhirUrl}`);
   try {
     const response = await axios({
       method: req.method,
-      url: fhirUrl,
+      url: `${fhirServerUrl}${req.originalUrl}`,
       data: req.body,
       headers: {
         Authorization: req.headers.authorization
@@ -54,7 +54,6 @@ app.use(async (req, res) => {
     });
     res.status(response.status).send(response.data);
   } catch (error) {
-    console.error(`Error proxying request: ${error.message}`);
     res.status(error.response ? error.response.status : 500).send(error.message);
   }
 });
