@@ -6,7 +6,6 @@ const promClient = require('prom-client');
 const app = express();
 const port = 3000;
 const fhirServerUrl = 'http://192.168.162.23:8080';
-const BEARER_TOKEN = 'uniciasas'; // Reemplaza con tu token secreto
 
 // Configuración de autenticación básica
 const auth = basicAuth({
@@ -14,16 +13,6 @@ const auth = basicAuth({
   challenge: true,
   unauthorizedResponse: 'Acceso denegado. Contacte con Unicia SAS para obtener acceso.'
 });
-
-// Middleware para verificar el token Bearer
-const bearerAuth = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.startsWith('Bearer ') && authHeader.split(' ')[1] === BEARER_TOKEN) {
-    next();
-  } else {
-    res.status(403).send('Acceso denegado. Contacte con Unicia SAS para obtener acceso.');
-  }
-};
 
 // Configuración de métricas de Prometheus
 const register = new promClient.Registry();
@@ -37,9 +26,6 @@ app.get('/metrics', async (req, res) => {
 
 // Middleware de autenticación básica
 app.use(auth);
-
-// Middleware de autenticación Bearer
-app.use(bearerAuth);
 
 // Middleware para manejar el proxy de solicitudes FHIR
 app.use(async (req, res) => {
