@@ -4,7 +4,7 @@ const basicAuth = require('express-basic-auth');
 const promClient = require('prom-client');
 
 const app = express();
-const port = 3000;
+const port = 9696;
 const fhirServerUrl = 'http://192.168.162.23:8080';
 const BEARER_TOKEN = 'uniciasas'; // Reemplaza con tu token secreto
 
@@ -14,9 +14,6 @@ const auth = basicAuth({
   challenge: true,
   unauthorizedResponse: 'Acceso denegado. Contacte con Unicia SAS para obtener acceso.'
 });
-
-// Middleware de autenticación básica
-app.use(auth);
 
 // Middleware para verificar el token Bearer
 const bearerAuth = (req, res, next) => {
@@ -38,8 +35,9 @@ app.get('/metrics', async (req, res) => {
   res.end(await register.metrics());
 });
 
-// Endpoint de proxy para HAPI FHIR server con verificación de token Bearer
-app.use('/', bearerAuth, async (req, res) => {
+// Endpoint de proxy para HAPI FHIR server con autenticación básica y verificación de token Bearer
+app.use(auth);
+app.use('/fhir', bearerAuth, async (req, res) => {
   try {
     const response = await axios({
       method: req.method,
