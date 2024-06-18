@@ -37,11 +37,16 @@ app.get('/metrics', async (req, res) => {
 
 // Endpoint de proxy para HAPI FHIR server con autenticación básica y verificación de token Bearer
 app.use(auth);
-app.use('/fhir', bearerAuth, async (req, res) => {
+app.use(bearerAuth);
+
+// Middleware para manejar el proxy de solicitudes FHIR
+app.use(async (req, res) => {
+  const fhirUrl = `${fhirServerUrl}${req.originalUrl}`;
+  console.log(`Proxying request to: ${fhirUrl}`);
   try {
     const response = await axios({
       method: req.method,
-      url: `${fhirServerUrl}${req.url}`,
+      url: fhirUrl,
       data: req.body,
       headers: {
         Authorization: req.headers.authorization
@@ -49,6 +54,7 @@ app.use('/fhir', bearerAuth, async (req, res) => {
     });
     res.status(response.status).send(response.data);
   } catch (error) {
+    console.error(`Error proxying request: ${error.message}`);
     res.status(error.response ? error.response.status : 500).send(error.message);
   }
 });
