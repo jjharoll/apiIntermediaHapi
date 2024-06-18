@@ -12,7 +12,7 @@ const BEARER_TOKEN = 'uniciasas'; // Reemplaza con tu token secreto
 const auth = basicAuth({
   users: { 'admin': 'admin' },
   challenge: true,
-  unauthorizedResponse: 'Forbidden'
+  unauthorizedResponse: 'Acceso denegado. Contacte con Unicia SAS para obtener acceso.'
 });
 
 // Middleware de autenticación básica
@@ -24,7 +24,7 @@ const bearerAuth = (req, res, next) => {
   if (authHeader && authHeader.split(' ')[1] === BEARER_TOKEN) {
     next();
   } else {
-    res.status(403).send('Forbidden');
+    res.status(403).send('Acceso denegado. Contacte con Unicia SAS para obtener acceso.');
   }
 };
 
@@ -39,11 +39,11 @@ app.get('/metrics', async (req, res) => {
 });
 
 // Endpoint de proxy para HAPI FHIR server con verificación de token Bearer
-app.use('/fhir', bearerAuth, async (req, res) => {
+app.use('/', bearerAuth, async (req, res) => {
   try {
     const response = await axios({
       method: req.method,
-      url: `${fhirServerUrl}/fhir${req.url}`,
+      url: `${fhirServerUrl}${req.url}`,
       data: req.body,
       headers: {
         Authorization: req.headers.authorization
